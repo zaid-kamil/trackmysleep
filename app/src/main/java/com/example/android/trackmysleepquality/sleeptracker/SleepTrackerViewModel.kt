@@ -35,8 +35,23 @@ class SleepTrackerViewModel(val database: SleepDatabaseDao, application: Applica
         formatNights(nights, application.resources)
     }
 
+    val startButtonVisible = Transformations.map(tonight) {
+        it == null
+    }
+    val stopButtonVisible = Transformations.map(tonight) {
+        it != null
+    }
+    val clearButtonVisible = Transformations.map(nights) {
+        it?.isNotEmpty()
+    }
+
+    private var _showSnackbarEvent = MutableLiveData<Boolean>()
+    val showSnackbarEvent: LiveData<Boolean>
+        get() = _showSnackbarEvent
+
+
     private val _navigateToSleepQuality = MutableLiveData<SleepNight>()
-    val navigateToSleepQuality : LiveData<SleepNight>
+    val navigateToSleepQuality: LiveData<SleepNight>
         get() = _navigateToSleepQuality
 
     init {
@@ -70,7 +85,12 @@ class SleepTrackerViewModel(val database: SleepDatabaseDao, application: Applica
             val oldNight = tonight.value ?: return@launch
             oldNight.endTimeMilli = System.currentTimeMillis()
             update(oldNight)
+            _navigateToSleepQuality.value = oldNight
         }
+    }
+
+    fun doneNavigating() {
+        _navigateToSleepQuality.value = null
     }
 
     fun onClear() {
@@ -90,6 +110,10 @@ class SleepTrackerViewModel(val database: SleepDatabaseDao, application: Applica
 
     private suspend fun clear() {
         database.clear()
+    }
+
+    fun doneShowingSnackbar() {
+        _showSnackbarEvent.value = null
     }
 
 }
